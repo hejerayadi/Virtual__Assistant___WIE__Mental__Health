@@ -10,50 +10,52 @@
     <textarea id="userInput" rows="4" cols="50" placeholder="How are you feeling?"></textarea><br>
     <button onclick="analyze()">Submit</button>
 
-    <h3>Detected Emotions:</h3>
-    <pre id="emotions"></pre>
+    <button onclick="startVoice()">🎤 Speak</button>
+    <button onclick="stopVoice()">🛑 Stop</button>
 
-    <h3>LLM Response:</h3>
-    <p id="response"></p>
+    <h3>Detected Emotions (Text):</h3>
+    <pre id="emotions">No emotion detected yet.</pre>
+
+    <h3>Voice Transcription:</h3>
+    <p id="transcription">No voice input yet.</p>
+
+    <h3>LLM Text Response:</h3>
+    <p id="textResponse">No response yet.</p>
+
+    <h3>LLM Audio Response:</h3>
+    <audio id="responseAudio" controls style="display:none;"></audio>
+    <button id="replayBtn" onclick="replayAudio()" style="display:none;">🔁 Replay</button>
 
     <h3>Select Camera:</h3>
-    <select id="cameraSelect" onchange="changeCamera()">
-        {% for cam in cameras %}
-            <option value="{{ cam }}">Camera {{ cam }}</option>
-        {% endfor %}
-    </select>
+    <select id="cameraSelect"></select>
 
     <h3>Live Emotion Detection (Webcam)</h3>
-    <img id="videoFeed" src="/video_feed/0" width="480" height="360" />
+    <video id="videoFeed" width="480" height="360" autoplay muted></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <!-- External scripts -->
+    <script src="{{ url_for('static', filename='scripts/text_analysis.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='scripts/camera.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='scripts/face_analysis.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='scripts/voice.js') }}" defer></script>
 
     <script>
-        async function analyze() {
-            const text = document.getElementById("userInput").value;
-            if (!text.trim()) {
-                alert("Please enter how you feel.");
-                return;
-            }
-
-            try {
-                const res = await fetch("/analyze", {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
-                });
-
-                const data = await res.json();
-                document.getElementById("emotions").innerText = JSON.stringify(data.emotions, null, 2);
-                document.getElementById("response").innerText = data.response || "⚠️ No LLM response received.";
-            } catch (error) {
-                console.error("Error analyzing text:", error);
-                document.getElementById("response").innerText = "⚠️ Error analyzing text.";
-            }
+        // To be called after audio generation
+        function updateAudioResponse(audioFilename) {
+            const audioElement = document.getElementById("responseAudio");
+            const replayBtn = document.getElementById("replayBtn");
+            audioElement.src = `/static/${audioFilename}`;
+            audioElement.style.display = "block";
+            replayBtn.style.display = "inline-block";
+            audioElement.play().catch(e => {
+                console.warn("🔇 Audio playback failed:", e);
+            });
         }
 
-        function changeCamera() {
-            const camId = document.getElementById("cameraSelect").value;
-            const video = document.getElementById("videoFeed");
-            video.src = `/video_feed/${camId}`;
+        function replayAudio() {
+            const audio = document.getElementById("responseAudio");
+            audio.currentTime = 0;
+            audio.play();
         }
     </script>
 </body>
