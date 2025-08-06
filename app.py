@@ -180,7 +180,7 @@ def analyze_voice():
                 "confidence": emotion_result.get("confidence")
             },
             "response": llm_response,
-            "audio_url": "/static/llm_response.mp3"
+            "audio_url": "/static/llm_response.wav"
         })
 
 
